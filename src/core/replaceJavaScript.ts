@@ -66,23 +66,113 @@ export default function replaceJavaScript(
         //对于普通字符串的替换
         currentKey = VueI18nInstance.getCurrentKey(match, file)
         result = `i18n.t('${currentKey}')`
+        VueI18nInstance.setMessageItem(currentKey, match)
+        return result
       } else {
         //对于 `` 拼接字符串的替换
         let matchIndex = 0
         let matchArr: string[] = []
-        match = match.replace(/(\${)([^{}]+)(})/gim, (_, prev, match) => {
-          matchArr.push(match)
-          return `{${matchIndex++}}`
-        })
-        currentKey = VueI18nInstance.getCurrentKey(match, file)
-        if (!matchArr.length) {
-          result = `i18n.t('${currentKey}')`
+        // Split the string into chunks of static text and expressions ${...}
+        // This is necessary to handle nested braces {} inside expressions correctly
+        let chunks: { type: 'text' | 'expr', value: string }[] = []
+        let current = 0
+        while (current < match.length) {
+          let exprStart = match.indexOf('${', current)
+          if (exprStart === -1) {
+            chunks.push({ type: 'text', value: match.slice(current) })
+            break
+          } else {
+            if (exprStart > current) {
+              chunks.push({ type: 'text', value: match.slice(current, exprStart) })
+            }
+            // Find finding closing brace with balancing
+            let braceCount = 1
+            let i = exprStart + 2
+            while (i < match.length && braceCount > 0) {
+              if (match[i] === '{') braceCount++
+              else if (match[i] === '}') braceCount--
+              i++
+            }
+            if (braceCount === 0) {
+              chunks.push({ type: 'expr', value: match.slice(exprStart, i) }) // includes ${ and }
+              current = i
+            } else {
+              // Unbalanced or end of string, treat rest as text
+              chunks.push({ type: 'text', value: match.slice(current) })
+              break
+            }
+          }
+        }
+
+        // Check if there are Chinese characters in the static text parts
+        const hasChineseInText = chunks.some(chunk => chunk.type === 'text' && /[\u4e00-\u9fa5]/.test(chunk.value))
+
+        if (hasChineseInText) {
+          const hasNewline = chunks.some(chunk => chunk.type === 'text' && (chunk.value.includes('\n') || chunk.value.includes('\\n')))
+
+          if (hasNewline) {
+            let resultParts = chunks.map(chunk => {
+              if (chunk.type === 'text') {
+                if (/[\u4e00-\u9fa5]/.test(chunk.value)) {
+                  currentKey = VueI18nInstance.getCurrentKey(chunk.value, file)
+                  VueI18nInstance.setMessageItem(currentKey, chunk.value)
+                  return '${i18n.t(\'' + currentKey + '\')}'
+                } else {
+                  return chunk.value
+                }
+              } else {
+                const exprContent = chunk.value.slice(2, -1)
+                const processedExpr = replaceJavaScript(exprContent, file, VueI18nInstance, msg)
+                return '${' + processedExpr + '}'
+              }
+            })
+            return '`' + resultParts.join('') + '`'
+          }
+
+          // If the template string itself contains Chinese, treat the whole thing as one translation key using parameters
+          let templateString = ''
+          chunks.forEach(chunk => {
+            if (chunk.type === 'text') {
+              templateString += chunk.value
+            } else {
+              // Extract expression content: ${ expr } -> expr
+              const exprContent = chunk.value.slice(2, -1)
+              // Recursively process the expression for translations
+              const processedExpr = replaceJavaScript(exprContent, file, VueI18nInstance, msg)
+              matchArr.push(processedExpr)
+              templateString += `{${matchIndex++}}`
+            }
+          })
+          
+          currentKey = VueI18nInstance.getCurrentKey(templateString, file)
+          VueI18nInstance.setMessageItem(currentKey, templateString)
+          
+          if (!matchArr.length) {
+            result = `i18n.t('${currentKey}')`
+          } else {
+            result = `i18n.t('${currentKey}', [${matchArr.toString()}])`
+          }
+           return result
         } else {
-          result = `i18n.t('${currentKey}', [${matchArr.toString()}])`
+          // If no Chinese in static text, just reconstruct the string with potentially translated expressions
+          // This preserves the template string structure (backticks) but translates inner parts
+           let resultParts = chunks.map(chunk => {
+            if (chunk.type === 'text') {
+               return chunk.value
+            } else {
+               const exprContent = chunk.value.slice(2, -1)
+               const processedExpr = replaceJavaScript(exprContent, file, VueI18nInstance, msg)
+               return '${' + processedExpr + '}'
+            }
+          })
+          // We need to be careful not to double-wrap if it was already part of a replacement logic,
+          // but here we are returning the raw string suitable for being inside the file.
+          // However, the regex matched the whole `...` string.
+          // If we return just `...` it might be matched again? No, replace matching consumes it.
+          // We must return the new source code string.
+           return '`' + resultParts.join('') + '`'
         }
       }
-      VueI18nInstance.setMessageItem(currentKey, match)
-      return result
     }
   )
 

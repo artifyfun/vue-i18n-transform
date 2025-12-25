@@ -1,0 +1,91 @@
+
+> vue-i18n-transform@0.0.6 test
+> jest --coverage test/issue_repro_tmpl.test.ts
+
+  console.log
+    DEBUG: match: "中文名: ${item.title}\\n英文名: ${item.code}"
+
+      at src/core/replaceJavaScript.ts:2405:17
+          at String.replace (<anonymous>)
+
+  console.log
+    DEBUG: chunks: [{"type":"text","value":"中文名: "},{"type":"expr","value":"${item.title}"},{"type":"text","value":"\\n英文名: "},{"type":"expr","value":"${item.code}"}]
+
+      at src/core/replaceJavaScript.ts:2408:17
+          at String.replace (<anonymous>)
+
+  console.log
+    DEBUG: hasNewline: true
+
+      at src/core/replaceJavaScript.ts:2426:17
+          at String.replace (<anonymous>)
+
+  console.log
+    DEBUG: match: "中文名: ${item.title} 英文名: ${item.code}"
+
+      at src/core/replaceJavaScript.ts:2405:17
+          at String.replace (<anonymous>)
+
+  console.log
+    DEBUG: chunks: [{"type":"text","value":"中文名: "},{"type":"expr","value":"${item.title}"},{"type":"text","value":" 英文名: "},{"type":"expr","value":"${item.code}"}]
+
+      at src/core/replaceJavaScript.ts:2408:17
+          at String.replace (<anonymous>)
+
+  console.log
+    DEBUG: hasNewline: false
+
+      at src/core/replaceJavaScript.ts:2426:17
+          at String.replace (<anonymous>)
+
+FAIL test/issue_repro_tmpl.test.ts
+  replaceJavaScript Template Literal Issue
+    ✕ Newlines in template literal should split translations (15 ms)
+    ✕ No newlines in template literal should keep aggregated translation (2 ms)
+
+  ● replaceJavaScript Template Literal Issue › Newlines in template literal should split translations
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "const str = `${i18n.t('test_1')}: ${item.title}\\n${i18n.t('test_2')}: ${item.code}`"
+    Received: "const str = `${i18n.t('test_1')}${item.title}${i18n.t('test_2')}${item.code}`"
+
+      36 |     )
+      37 |     
+    > 38 |     // Verify keys
+         |                   ^
+      39 |     const messages = VueI18nInstance.getMessage()
+      40 |     expect(messages['test_1']).toBe('中文名')
+      41 |     expect(messages['test_2']).toBe('英文名')
+
+      at Object.<anonymous> (test/issue_repro_tmpl.test.ts:38:24)
+
+  ● replaceJavaScript Template Literal Issue › No newlines in template literal should keep aggregated translation
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "i18n.t('test_1', [item.title, item.code])"
+    Received string:    "const str = i18n.t('test_1', [item.title,item.code])"
+
+      46 |      const result = replaceJavaScript(
+      47 |       content,
+    > 48 |       'testExample/origin/test.js',
+         |                        ^
+      49 |       VueI18nInstance,
+      50 |       message
+      51 |     )
+
+      at Object.<anonymous> (test/issue_repro_tmpl.test.ts:48:24)
+
+----------------------|---------|----------|---------|---------|------------------------------------------------------------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                      
+----------------------|---------|----------|---------|---------|------------------------------------------------------------------------
+All files             |   57.52 |    38.88 |   39.39 |   58.65 |                                                                        
+ i18nFile.ts          |   48.19 |    14.28 |      35 |   51.28 | 3-9,40,43-46,50,53,57-61,87,90,98-99,105-107,118-144                   
+ replaceJavaScript.ts |   65.04 |    62.16 |   46.15 |   64.35 | 13-18,22-24,28-30,35-37,41-43,51-54,67-68,79,90-91,111,140,150-165,171 
+----------------------|---------|----------|---------|---------|------------------------------------------------------------------------
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 total
+Snapshots:   0 total
+Time:        0.76 s, estimated 1 s
+Ran all test suites matching /test\/issue_repro_tmpl.test.ts/i.

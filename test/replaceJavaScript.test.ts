@@ -11,9 +11,14 @@ const message = {
 }
 
 describe('replaceJavaScript 测试', () => {
-  const configPath = path.join(process.cwd(), configFile)
-  const config = require(configPath)
-  config.entry = 'testExample/origin'
+  /* const configPath = path.join(process.cwd(), configFile)
+  const config = require(configPath) */
+  const config = {
+      entry: 'testExample/origin',
+      output: 'testExample/result',
+      exclude: ['testExample/result'],
+      locales: ['zh-CN', 'en-US'],
+  }
   let VueI18nInstance: VueI18n
   beforeEach(() => {
     VueI18nInstance = new VueI18n()

@@ -80,7 +80,7 @@ export function replaceVueScript(
         const hasI18nUsageInTemplate = /\$t\(/.test(string)
         
         const forceImport = options.forceImportI18n !== false // 默认为 true，保持向后兼容
-        const hasI18nUsage = hasI18nUsageInScript || hasI18nUsageInTemplate
+        const hasI18nUsage = hasI18nUsageInScript
         
         if (forceImport || hasI18nUsage) {
           // 若没有引入，则在文件头部引入
