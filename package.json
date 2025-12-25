@@ -39,12 +39,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zxpsuper/vue-i18n-transform.git"
+    "url": "git+https://github.com/artifyfun/vue-i18n-transform.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/zxpsuper/vue-i18n-transform/issues"
+    "url": "https://github.com/artifyfun/vue-i18n-transform/issues"
   },
   "keywords": [
     "vue-i18n 批量转换文件",
@@ -52,5 +52,5 @@
     "vue-i18n ",
     "vue-i18n-transform"
   ],
-  "homepage": "https://github.com/zxpsuper/vue-i18n-transform#readme"
+  "homepage": "https://github.com/artifyfun/vue-i18n-transform#readme"
 }
