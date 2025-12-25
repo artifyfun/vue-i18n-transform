@@ -7,6 +7,8 @@ export type Config = {
     extensions: string[];
     useChineseKey: boolean;
     projectDirname: string;
+    i18nImportPath?: string;
+    forceImportI18n?: boolean;
 };
 export default class VueI18n {
     /**起始索引 */

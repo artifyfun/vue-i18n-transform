@@ -56,6 +56,37 @@ export default function replaceVueTemplate(
       return commentsKey
     })
 
+    // 处理模板字符串（反引号包裹的内容），如 :label="`输入${item.label}`"
+    // 将模板字符串转换为 $t() 调用，类似 JavaScript 的处理方式
+    match = match.replace(/(:?(\w+-){0,}\w+=)(["'])(`[^`]*`)\3/gim, (fullMatch: string, attrPrefix: string, _innerGroup: string, quote: string, templateStr: string) => {
+      // 检查模板字符串中是否包含中文
+      if (!/[\u4e00-\u9fa5]/.test(templateStr)) {
+        return fullMatch
+      }
+      
+      // 提取模板字符串中的变量 ${...}
+      let matchIndex = 0
+      let matchArr: string[] = []
+      let templateContent = templateStr.slice(1, -1) // 去掉反引号
+      let processedContent = templateContent.replace(/\${([^}]+)}/gim, (_, varExpr: string) => {
+        matchArr.push(varExpr.trim())
+        return `{${matchIndex++}}`
+      })
+      
+      // 获取 key
+      const currentKey = VueI18nInstance.getCurrentKey(processedContent, file)
+      VueI18nInstance.setMessageItem(currentKey, processedContent)
+      
+      // 构建替换后的结果，保持原有的引号类型
+      if (matchArr.length === 0) {
+        // 没有变量，直接替换为 $t()
+        return `${attrPrefix}${quote}$t('${currentKey}')${quote}`
+      } else {
+        // 有变量，使用 $t('key', [vars]) 形式
+        return `${attrPrefix}${quote}$t('${currentKey}', [${matchArr.toString()}])${quote}`
+      }
+    })
+
     match = match.replace(
       /((\w+-){0,}\w+=['"]|>|'|")([^'"<>]*[\u4e00-\u9fa5]+[^'"<>]*)(['"<])/gim,
       (_, prev: string, __, match: string, after: string, offset: number) => {

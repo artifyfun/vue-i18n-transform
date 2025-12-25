@@ -97,10 +97,12 @@ module.exports = {
   extensions: ['.vue', '.js', '.ts'], // 重写的文件类型，默认是 ['.js', '.vue', '.ts']
   single: false, // 是否为单文件编译, 默认为 false. 如果为 true, 则 entry 需为文件而不是文件夹, 如 entry: 'src/index.vue'
   filename: 'zh_cn', // 输入的中文 json 文件名,默认为 zh_cn
-  useChineseKey: false // 是否使用中文作为键
+  useChineseKey: false, // 是否使用中文作为键
+  i18nImportPath: '@/lang', // 自定义 i18n 导入路径，如 '@/lang'，如果不设置则使用相对路径自动计算。如果文件中已存在旧的导入路径，配置此选项后会自动替换为新的路径
+  forceImportI18n: true // 是否强制导入 i18n，为 true 时强制给文件写入 import i18n，为 false 时自动判断文件是否有必要写入（只有当文件中实际使用了 i18n 时才写入）。默认为 true，保持向后兼容
 }
 ```
 
 ## 问题&建议
 
-如果你有任何问题，可以给我发邮件(zxpscau@163.com)，或者给项目提 [issue](https://github.com/zxpsuper/vue-i18n-transform/issues/new).
+如果你有任何问题，可以给项目提 [issue](https://github.com/artifyfun/vue-i18n-transform/issues/new).

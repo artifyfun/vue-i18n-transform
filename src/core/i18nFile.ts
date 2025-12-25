@@ -10,6 +10,8 @@ export type Config = {
   extensions: string[]
   useChineseKey: boolean
   projectDirname: string
+  i18nImportPath?: string // 自定义 i18n 导入路径，如 '@/lang'，如果不设置则使用相对路径
+  forceImportI18n?: boolean // 是否强制导入 i18n，为 true 时强制写入 import i18n，为 false 时自动判断文件是否有必要写入
 }
 
 const defaultConfig: Config = {
@@ -132,12 +134,25 @@ export default class VueI18n {
   /**获取所有文件路径 */
   getAllFiles(dir: string) {
     let results: string[] = []
+    
+    // 排除文件夹：将绝对路径转换为相对路径进行比较
+    const relativeDir = this.config.projectDirname 
+      ? path.relative(this.config.projectDirname, dir).replace(/\\/g, '/')
+      : dir.replace(/\\/g, '/')
+    
+    // 检查当前目录是否应该被排除
+    const shouldExclude = this.config.exclude.some(excludePath => {
+      const normalizedExclude = excludePath.replace(/\\/g, '/')
+      // 检查是否完全匹配，或者当前目录是排除路径的子目录
+      return relativeDir === normalizedExclude || relativeDir.startsWith(normalizedExclude + '/')
+    })
+    
+    if (shouldExclude) {
+      return results
+    }
+    
     fs.readdirSync(dir).forEach((item: string) => {
       item = path.join(dir, item)
-      // 排除文件夹
-      if (this.config.exclude.includes(dir.replace('\\', '/'))) {
-        return
-      }
       if (fs.lstatSync(item).isDirectory()) {
         results.push(...this.getAllFiles(item))
       } else {

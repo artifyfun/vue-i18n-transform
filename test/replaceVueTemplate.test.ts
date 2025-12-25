@@ -284,4 +284,26 @@ describe('replaceVueTemplate 测试', () => {
     const result = replaceVueTemplate(content, 'testExample/origin/test.vue', VueI18nInstance, message)
     expect(result).toBe(`<template><div>名字{{name +"英文"}}</div></template>`)
   })
+
+  it('替换模板字符串中的中文，:label="`输入${item.label}`"', () => {
+    const VueI18nInstance = new VueI18n()
+    VueI18nInstance.mergeConfig({...config, projectDirname: process.cwd()})
+    const content = `<template><div :label="\`输入\${item.label}\`"></div></template>`
+    const result = replaceVueTemplate(content, 'testExample/origin/test.vue', VueI18nInstance, message)
+    expect(result.replace(/[\n\r]+|\s{2,}/gim, '')).toBe(
+      `<template><div :label="$t('test_1', [item.label])"></div></template>`
+    )
+    expect(VueI18nInstance.getMessage().test_1).toBe(`输入{0}`)
+  })
+
+  it('替换模板字符串中的中文（无变量），:label="`输入`"', () => {
+    const VueI18nInstance = new VueI18n()
+    VueI18nInstance.mergeConfig({...config, projectDirname: process.cwd()})
+    const content = `<template><div :label="\`输入\`"></div></template>`
+    const result = replaceVueTemplate(content, 'testExample/origin/test.vue', VueI18nInstance, message)
+    expect(result.replace(/[\n\r]+|\s{2,}/gim, '')).toBe(
+      `<template><div :label="$t('test_1')"></div></template>`
+    )
+    expect(VueI18nInstance.getMessage().test_1).toBe(`输入`)
+  })
 })
