@@ -7,6 +7,7 @@
     "build": "tsc",
     "clean": "rm -rf lib types",
     "prepublishOnly": "npm run clean && npm run build",
+    "release": "npm run prepublishOnly && npm publish --access public",
     "test": "jest --coverage",
     "test:watch": "jest test/recover.test.ts --watch --coverage",
     "dev": "ts-node ./test.ts"
